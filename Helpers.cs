@@ -75,7 +75,7 @@ public partial class HideLegs
       try
       {
         client.DefaultRequestHeaders.UserAgent.ParseAdd("HideLegs");
-        HttpResponseMessage response = await client.GetAsync("https://api.github.com/repos/1Mack/CS2-HideLags/releases/latest");
+        HttpResponseMessage response = await client.GetAsync("https://api.github.com/repos/1Mack/CS2-HideLegs/releases/latest");
 
         if (response.IsSuccessStatusCode)
         {
@@ -91,7 +91,7 @@ public partial class HideLegs
 
             if (comparisonResult < 0)
             {
-              Logger.LogWarning("Plugin is outdated! Check https://github.com/1Mack/CS2-HideLags/releases/latest");
+              Logger.LogWarning("Plugin is outdated! Check https://github.com/1Mack/CS2-HideLegs/releases/latest");
             }
             else if (comparisonResult > 0)
             {
