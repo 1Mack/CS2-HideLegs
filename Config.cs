@@ -21,8 +21,18 @@ public partial class HideLegs
 
 public class HideLegsConfig : BasePluginConfig
 {
+  [JsonPropertyName("Enabled")]
+  public bool Enabled { get; set; } = true;
+
   [JsonPropertyName("Command")]
-  public string[] Command { get; set; } = ["legs", "hidelegs"];
+  public CommandC Command { get; set; } = new();
+  public class CommandC
+  {
+    [JsonPropertyName("Prefix")]
+    public string[] Prefix { get; set; } = ["legs", "hidelegs"];
+    [JsonPropertyName("Permission")]
+    public string[] Permission { get; set; } = [];
+  }
 
   [JsonPropertyName("Database")]
   public DatabaseC Database { get; set; } = new();

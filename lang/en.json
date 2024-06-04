@@ -1,0 +1,8 @@
+{
+  "Prefix": "[{green}HideLegs{default}]",
+  "MissingCommandPermission": "{red}You don't have permission to use this command!",
+  "LegsAreNowVisible": "legs are now {GREEN}visible",
+  "LegsAreNowHidden": "Legs are now {RED}hidden",
+  "InformationsLoadedVisible": "Your config has been loaded. Your legs are now {GREEN}visible",
+  "InformationsLoadedHidden": "Your config has been loaded. Your legs are now {RED}hidden"
+}
