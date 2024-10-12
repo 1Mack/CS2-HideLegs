@@ -23,29 +23,31 @@ public partial class HideLegs
       throw new Exception($"{Localizer["Prefix"]} Unable to create tables!");
     }
   }
-  public async void GetClientInfo(CCSPlayerController player)
+  public async void GetClientInfo(ulong steamid64)
   {
-    ulong steamid = player.SteamID;
 
-    var result = await QueryAsync($"SELECT * FROM `{Config.Database.Prefix}` WHERE `steamid` = @steamid", new { steamid = steamid.ToString() });
+    var result = await QueryAsync($"SELECT * FROM `{Config.Database.Prefix}` WHERE `steamid` = @steamid", new { steamid = steamid64.ToString() });
 
 
     if (result.Count == 0) return;
 
     bool value = result[0].is_active;
 
-    if (!players.TryAdd(player.SteamID, value))
-      players[player.SteamID] = value;
+    if (!players.TryAdd(steamid64, new Players { Initial = value, Current = value }))
+      players[steamid64] = new Players
+      {
+        Initial = value,
+        Current = value
+      };
 
-    if (!playersToShowMessage.TryAdd(player.SteamID, value))
-      playersToShowMessage[player.SteamID] = value;
+    if (!playersToShowMessage.TryAdd(steamid64, value))
+      playersToShowMessage[steamid64] = value;
 
     Server.NextFrame(() =>
     {
       AddTimer(3.5f, () =>
       {
-        SetLegs(steamid, value);
-
+        SetLegs(steamid64, value);
       });
     });
 

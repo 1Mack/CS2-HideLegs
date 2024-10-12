@@ -1,8 +1,10 @@
-﻿using System.Drawing;
+﻿using System.Collections.Concurrent;
+using System.Drawing;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Modules.Admin;
+using CounterStrikeSharp.API.Modules.Entities;
 using Microsoft.Extensions.Logging;
 using static CounterStrikeSharp.API.Core.Listeners;
 
@@ -14,12 +16,16 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
   public override string ModuleName => "HideLegs";
   public override string ModuleAuthor => "1MaaaaaacK";
   public override string ModuleDescription => "Allows players to hide their first person legs model. (lower body view model)";
-  public override string ModuleVersion => "1.0.0";
+  public override string ModuleVersion => "1.0.1";
   public static int ConfigVersion => 1;
-  Dictionary<ulong, bool> players = [];
+  ConcurrentDictionary<ulong, Players> players = [];
   Dictionary<ulong, bool> playersToShowMessage = [];
 
-
+  public class Players
+  {
+    public bool Current { get; set; }
+    public bool Initial { get; set; }
+  }
   //Thanks to https://github.com/dran1x/CS2-HideLowerBody
   public override void Load(bool hotReload)
   {
@@ -28,21 +34,17 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
       Logger.LogWarning("This plugin is disabled");
       return;
     }
-
-    RegisterListener<OnClientAuthorized>((playerSlot, steamid) =>
+    RegisterEventHandler<EventPlayerConnectFull>((@event, info) =>
     {
-      CCSPlayerController? player = Utilities.GetPlayerFromSlot(playerSlot);
+      if (@event.Userid != null && @event.Userid.IsValid && !@event.Userid.IsBot && @event.Userid.AuthorizedSteamID != null)
+      {
+        if (Config.Command.Permission.Length > 0 && !AdminManager.PlayerHasPermissions(@event.Userid, Config.Command.Permission))
+          return HookResult.Continue;
 
-      if (player == null || !player.IsValid || player.IsBot) return;
-
-      if (Config.Command.Permission.Length > 0 && !AdminManager.PlayerHasPermissions(player, Config.Command.Permission))
-        return;
-
-      var steam = player.SteamID;
-
-      Task.Run(() => GetClientInfo(player));
+        GetClientInfo(@event.Userid.AuthorizedSteamID.SteamId64);
+      }
+      return HookResult.Continue;
     });
-
 
     RegisterListener<OnClientDisconnect>(playerSlot =>
     {
@@ -50,10 +52,12 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
 
       if (player == null || player.IsBot) return;
 
-      if (!players.TryGetValue(player.SteamID, out bool value)) return;
+      if (!players.TryGetValue(player.AuthorizedSteamID!.SteamId64, out var p)) return;
+
+      if (p.Current == p.Initial) return;
 
       Task.Run(() => ExecuteAsync(@$"INSERT INTO {Config.Database.Prefix} (steamid, is_active) VALUES (@steamid, @isActive)
-      ON DUPLICATE KEY UPDATE steamid = @steamid, is_active = @isActive", new { steamid = player.SteamID, isActive = value == true ? 1 : 0 }));
+      ON DUPLICATE KEY UPDATE steamid = @steamid, is_active = @isActive", new { steamid = player.SteamID, isActive = p.Current == true ? 1 : 0 }));
     });
 
     RegisterEventHandler<EventPlayerSpawn>((@event, info) =>
@@ -82,15 +86,15 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
 
         bool hideLegs;
 
-        if (players.TryGetValue(player.SteamID, out bool value))
+        if (players.TryGetValue(player.SteamID, out var p))
         {
-          hideLegs = !value;
-          players[player.SteamID] = hideLegs;
+          hideLegs = !p.Current;
+          players[player.SteamID].Current = hideLegs;
         }
         else
         {
           hideLegs = false;
-          players.Add(player.SteamID, hideLegs);
+          players.TryAdd(player.SteamID, new Players { Current = hideLegs, Initial = hideLegs });
         }
         SetLegs(player.SteamID, hideLegs);
 
