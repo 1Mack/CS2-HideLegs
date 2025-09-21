@@ -4,5 +4,6 @@
   "LegsAreNowVisible": "Suas pernas estão {GREEN}visíveis",
   "LegsAreNowHidden": "Suas pernas estão {RED}invisíveis",
   "InformationsLoadedVisible": "Sua configuração foi carregada. Suas pernas estão {GREEN}visíveis",
-  "InformationsLoadedHidden": "Sua configuração foi carregada. Suas pernas estão {RED}invisíveis"
+  "InformationsLoadedHidden": "Sua configuração foi carregada. Suas pernas estão {RED}invisíveis",
+  "PluginDisabled": "Esse plugin está {RED}desabilitado"
 }

@@ -4,6 +4,7 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Modules.Admin;
+using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Entities;
 using Microsoft.Extensions.Logging;
 using static CounterStrikeSharp.API.Core.Listeners;
@@ -16,10 +17,10 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
   public override string ModuleName => "HideLegs";
   public override string ModuleAuthor => "1MaaaaaacK";
   public override string ModuleDescription => "Allows players to hide their first person legs model. (lower body view model)";
-  public override string ModuleVersion => "1.0.1";
+  public override string ModuleVersion => "1.0.2";
   public static int ConfigVersion => 1;
-  ConcurrentDictionary<ulong, Players> players = [];
-  Dictionary<ulong, bool> playersToShowMessage = [];
+  readonly ConcurrentDictionary<ulong, Players> players = [];
+  readonly Dictionary<ulong, bool> playersToShowMessage = [];
 
   public class Players
   {
@@ -29,6 +30,18 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
   //Thanks to https://github.com/dran1x/CS2-HideLowerBody
   public override void Load(bool hotReload)
   {
+    if (Config.UsePrivateFeature)
+    {
+      if (hotReload)
+      {
+        Config.Enabled = Convar_isPluginEnabled.Value;
+      }
+      Convar_isPluginEnabled.ValueChanged += (_, value) =>
+      {
+        Config.Enabled = value;
+      };
+    }
+
     if (!Config.Enabled)
     {
       Logger.LogWarning("This plugin is disabled");
@@ -36,7 +49,7 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
     }
     RegisterEventHandler<EventPlayerConnectFull>((@event, info) =>
     {
-      if (@event.Userid != null && @event.Userid.IsValid && !@event.Userid.IsBot && @event.Userid.AuthorizedSteamID != null)
+      if (Config.Enabled && @event.Userid != null && @event.Userid.IsValid && !@event.Userid.IsBot && @event.Userid.AuthorizedSteamID != null)
       {
         if (Config.Command.Permission.Length > 0 && !AdminManager.PlayerHasPermissions(@event.Userid, Config.Command.Permission))
           return HookResult.Continue;
@@ -50,7 +63,7 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
     {
       CCSPlayerController? player = Utilities.GetPlayerFromSlot(playerSlot);
 
-      if (player == null || player.IsBot) return;
+      if (!Config.Enabled || player == null || player.IsBot) return;
 
       if (!players.TryGetValue(player.AuthorizedSteamID!.SteamId64, out var p)) return;
 
@@ -62,7 +75,7 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
 
     RegisterEventHandler<EventPlayerSpawn>((@event, info) =>
     {
-      if (@event.Userid == null || @event.Userid.IsBot) return HookResult.Continue;
+      if (!Config.Enabled || @event.Userid == null || @event.Userid.IsBot) return HookResult.Continue;
       if (playersToShowMessage.TryGetValue(@event.Userid.SteamID, out bool hideLegs))
       {
         @event.Userid.PrintToChat($"{Localizer["Prefix"]} {Localizer[hideLegs ? "InformationsLoadedHidden" : "InformationsLoadedVisible"]}");
@@ -76,7 +89,14 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
     {
       AddCommand(command, "Hides the lower body view model of a player.", (player, command) =>
       {
+
         if (player == null || !player.IsValid) return;
+
+        if (!Config.Enabled)
+        {
+          command.ReplyToCommand($"{Localizer["Prefix"]} {Localizer["PluginDisabled"]}");
+          return;
+        }
 
         if (Config.Command.Permission.Length > 0 && !AdminManager.PlayerHasPermissions(player, Config.Command.Permission))
         {
@@ -106,4 +126,5 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
     Task.Run(CreateDatabaseTables);
     CheckVersion();
   }
+  public FakeConVar<bool> Convar_isPluginEnabled = new("plugin_hidelegs_enabled", "Enable HideLegs", true);
 }

@@ -1,0 +1,53 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+        contents: write
+    name: Build and Release
+    runs-on: ubuntu-latest
+    outputs:
+        HIDELEGS_VERSION: ${{ steps.HIDELEGS_VERSION.outputs.HIDELEGS_VERSION }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+
+      - name: Get HideLegs Version
+        id: HIDELEGS_VERSION
+        run: |
+            HIDELEGS_VERSION=$(grep -oP 'ModuleVersion\s*=>\s*"\K[^"]*' src/HideLegs.cs)
+            echo "HIDELEGS_VERSION=$HIDELEGS_VERSION" >> $GITHUB_ENV
+      - name: Build and Release Artifacts
+        run: |
+          echo "Creating HideLegs base package with version: $HIDELEGS_VERSION"
+          dotnet publish -o package/addons/counterstrikesharp/plugins/HideLegs
+          
+          cd package && zip -q -r ../HideLegs-$HIDELEGS_VERSION.zip * && cd ..
+    
+          rm -r package/*
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          name: V${{ env.HIDELEGS_VERSION }}
+          tag_name: ${{ env.HIDELEGS_VERSION }}
+          body: 
+            New Version - ${{ env.HIDELEGS_VERSION }}
+          draft: false
+          prerelease: false
+          files: |
+            HideLegs-${{ env.HIDELEGS_VERSION }}.zip

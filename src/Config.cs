@@ -21,8 +21,11 @@ public partial class HideLegs
 
 public class HideLegsConfig : BasePluginConfig
 {
+  public override int Version { get; set; } = 2;
   [JsonPropertyName("Enabled")]
   public bool Enabled { get; set; } = true;
+  [JsonPropertyName("UsePrivateFeature")]
+  public bool UsePrivateFeature { get; set; } = false;
 
   [JsonPropertyName("Command")]
   public CommandC Command { get; set; } = new();

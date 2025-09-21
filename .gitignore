@@ -1,4 +1,6 @@
-bin
-obj
 .vscode
-HideLegs.sln
+.idea/*
+.vs/*
+obj/*
+bin/*
+CS2-HideLegs.sln

@@ -4,5 +4,6 @@
   "LegsAreNowVisible": "legs are now {GREEN}visible",
   "LegsAreNowHidden": "Legs are now {RED}hidden",
   "InformationsLoadedVisible": "Your config has been loaded. Your legs are now {GREEN}visible",
-  "InformationsLoadedHidden": "Your config has been loaded. Your legs are now {RED}hidden"
+  "InformationsLoadedHidden": "Your config has been loaded. Your legs are now {RED}hidden",
+  "PluginDisabled": "This plugin is {RED}disabled"
 }
