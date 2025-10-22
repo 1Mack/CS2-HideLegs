@@ -17,8 +17,8 @@ public partial class HideLegs : BasePlugin, IPluginConfig<HideLegsConfig>
   public override string ModuleName => "HideLegs";
   public override string ModuleAuthor => "1MaaaaaacK";
   public override string ModuleDescription => "Allows players to hide their first person legs model. (lower body view model)";
-  public override string ModuleVersion => "1.0.2";
-  public static int ConfigVersion => 1;
+  public override string ModuleVersion => "1.0.3";
+  public static int ConfigVersion => 2;
   readonly ConcurrentDictionary<ulong, Players> players = [];
   readonly Dictionary<ulong, bool> playersToShowMessage = [];
 
